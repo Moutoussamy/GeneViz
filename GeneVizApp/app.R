@@ -4,7 +4,7 @@
 
 library(shiny)
 
-data = read.csv("../test_data.csv") #READ THE DATA
+
 
 
 # User interface part
@@ -14,8 +14,9 @@ ui <- fluidPage(
     titlePanel("Gene Log2FC vizualisation App - RNAseq data"),
 
     sidebarLayout(
-        # text input to select a gene
+        # Select the file and text input to select a gene
         sidebarPanel(
+            fileInput("data_file", "Upload Gene Expression Data (CSV)"),
             textInput("gene","Gene name","BST2")
         ),
 
@@ -28,8 +29,17 @@ ui <- fluidPage(
 
 # Server part
 server <- function(input, output) {
+  
+  gene_data <- reactive({
+    req(input$data_file)  # Ensure a file is selected
+    read.csv(input$data_file$datapath)
+  })
+  
   output$distPlot <- renderPlot({
-    filtered_data <- data[grepl(input$gene, data$X, ignore.case = TRUE), ]
+    gene_data_df <- gene_data()
+    filtered_data <- gene_data_df[grepl(input$gene, gene_data_df$X, ignore.case = TRUE), ]
+    
+    
     if (nrow(filtered_data) > 0) {
       bar_names <- colnames(filtered_data)[-1]
       bar_colors <- ifelse(filtered_data[, -1] > 0, "#A69F3F", "#AECCF2")
